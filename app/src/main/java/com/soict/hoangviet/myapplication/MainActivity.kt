@@ -14,12 +14,14 @@ import com.takusemba.spotlight.effet.RippleEffect
 import com.takusemba.spotlight.shape.Circle
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+    val mCompositeDisposable = CompositeDisposable()
     internal var spotlight: Spotlight? = null
     internal var firstRoot: FrameLayout? = null
     internal var secondRoot: FrameLayout? = null
@@ -92,12 +94,19 @@ class MainActivity : AppCompatActivity() {
             })
             .build()
         spotlight?.start()
-        Observable.interval(3, 3, TimeUnit.SECONDS)
-            .take(2)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                spotlight?.next()
-            }
+        mCompositeDisposable.add(
+            Observable.interval(3, 3, TimeUnit.SECONDS)
+                .take(2)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    spotlight?.next()
+                }
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        mCompositeDisposable.dispose()
     }
 }
